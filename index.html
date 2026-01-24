@@ -65,59 +65,55 @@
     <div class="loader" id="loader" aria-label="Loading game...">Loading…</div>
 
     <main class="loader" id="gameInput">
-        <img src="assets/logo.png" alt="SaneGames Logo" style="width:100px; display:block; margin: 0 auto;" />
-        <h1>Welcome to <b>SaneGames.</b></h1>
-        <h2 id="tagline">
-            A better client for all CrazyGames games, with no ads or
-            annoying UI.
-        </h2>
+        <div class="hero-section">
+            <img src="assets/logo.png" alt="SaneGames Logo" style="width:100px; display:block; margin: 0 auto 1em auto;" />
+            <h1>Welcome to <b>SaneGames.</b></h1>
+            <h2 id="tagline">
+                A better client for all CrazyGames games, with no ads or annoying UI.
+            </h2>
+        </div>
 
         <section id="main-content" aria-label="Game loading options">
-            <h3>Option 1: Use the Bookmarklet (Recommended)</h3>
-        <p>
-            To easily upgrade your gaming experience, drag the button below
-            to your bookmarks bar.
-        </p>
-        <p>
-            Then, when you're on a CrazyGames game
-            page, just click the bookmarklet!
-        </p>
-        <a href="javascript:(function(){const s='sanegames.elouan.xyz',h=window.location.hostname,f=window.location.href;if(h===s){alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!')}else{const r=/crazygames\.(?:com|id|dev|co\.uk|net|org|[a-z]{2})\/game\/([^\/?#]+)/,m=f.match(r);if(m&&m[1]){const g=m[1],n=`https://sanegames.elouan.xyz/?game=${g}`;window.location.href=n}else{alert('Please navigate to a CrazyGames game page first, then click the bookmarklet.')}}})();"
-            class="bookmarklet-button" draggable="true"
-            onclick="event.preventDefault(); alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!');"
-            role="button"
-            aria-label="Drag to bookmarks bar to install SaneGames bookmarklet">
-            Play Sane
-        </a>
-        <p>
-            Now, head over to the main
-            <a href="https://www.crazygames.com/" target="_blank" rel="noopener noreferrer">CrazyGames</a>
-            website, find a game, then click your new bookmarklet! It's that
-            easy!
-        </p>
+            <h3>📌 Option 1: Use the Bookmarklet (Recommended)</h3>
+            <p>
+                To easily upgrade your gaming experience, drag the button below to your bookmarks bar. Then, when you're on a CrazyGames game page, just click the bookmarklet!
+            </p>
+            <div style="text-align: center;">
+                <a href="javascript:(function(){const s='sanegames.elouan.xyz',h=window.location.hostname,f=window.location.href;if(h===s){alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!')}else{const r=/crazygames\.(?:com|id|dev|co\.uk|net|org|[a-z]{2})\/game\/([^\/?#]+)/,m=f.match(r);if(m&&m[1]){const g=m[1],n=`https://sanegames.elouan.xyz/?game=${g}`;window.location.href=n}else{alert('Please navigate to a CrazyGames game page first, then click the bookmarklet.')}}})();"
+                    class="bookmarklet-button" draggable="true"
+                    onclick="event.preventDefault(); alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!');"
+                    role="button"
+                    aria-label="Drag to bookmarks bar to install SaneGames bookmarklet">
+                    ▶️ Play Sane
+                </a>
+            </div>
+            <p style="text-align: center; font-size: 0.95em; margin-top: 1.5em;">
+                Now head to <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>, find a game, and click your bookmarklet!
+            </p>
+        </section>
 
         <section>
-            <h3>Option 2: Enter Game Slug Manually</h3>
+            <h3>⌨️ Option 2: Enter Game Slug Manually</h3>
             <p>
-                Alternatively, find a game on
-                <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>. The URL in your address bar will look
-                something like
-                <br /><code>https://www.crazygames.com/game/your-game-slug</code>. <br />Copy the
-                <code>your-game-slug</code> part and paste it
-                below.
+                Alternatively, find a game on <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>. The URL in your address bar will look something like <code>https://www.crazygames.com/game/your-game-slug</code>.
             </p>
-            <label for="gameSlugInput" class="input-label">Game Slug:</label>
-            <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
-            <button onclick="loadGameFromInput()" aria-label="Load and play the entered game">Play Game</button>
+            <p>Copy the <code>your-game-slug</code> part and paste it below.</p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 2em 0;">
+                <div>
+                    <label for="gameSlugInput" class="input-label">Game Slug:</label>
+                    <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
+                </div>
+                <button onclick="loadGameFromInput()" aria-label="Load and play the entered game">Play Game</button>
+            </div>
         </section>
 
         <footer>
             <p>
                 <i>PS: SaneGames is
-                    <a href="https://github.com/sanegamz/sanegamz.github.io" rel="noopener noreferrer" target="_blank">Open Source</a>!</i>
+                    <a href="https://github.com/sanegamz/sanegamz.github.io" rel="noopener noreferrer">Open Source</a>!</i>
             </p>
             <nav aria-label="Footer links">
-                <a href="/privacypolicy">Privacy Policy</a>
+                <a href="/privacypolicy">Privacy Policy | SaneGames is not affiliated with CrazyGames or other IP in any way.</a>
             </nav>
         </footer>
     </main>
