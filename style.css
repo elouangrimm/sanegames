@@ -14,23 +14,6 @@ body {
     line-height: 1.6;
 }
 
-/* Skip link for accessibility */
-.skip-link {
-    position: absolute;
-    top: -40px;
-    left: 0;
-    background: #5335CC;
-    color: white;
-    padding: 8px;
-    text-decoration: none;
-    border-radius: 0 0 4px 0;
-    z-index: 100;
-}
-
-.skip-link:focus {
-    top: 0;
-}
-
 .loader {
     display: flex;
     flex-direction: column;
