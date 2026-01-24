@@ -593,6 +593,32 @@ if (typeof window !== "undefined") {
         }
     };
     window.addEventListener("beforeunload", stopPollingForUiModifications);
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", function(e) {
+        if (typeof document === "undefined") return;
+        
+        // Forward slash to focus search
+        if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
+            e.preventDefault();
+            const gameInput = document.getElementById("gameSlugInput");
+            if (gameInput) {
+                gameInput.focus();
+            }
+        }
+        
+        // Enter to load game when focused on input
+        if (e.key === "Enter" && document.activeElement.id === "gameSlugInput") {
+            e.preventDefault();
+            loadGameFromInput();
+        }
+
+        // Question mark for help/shortcuts (could expand later)
+        if (e.key === "?" && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            console.log("SaneGames Keyboard Shortcuts:\n/ - Focus game search\nEnter - Load game (when in search)\n? - Show help");
+        }
+    });
 }
 
 loadGame();
