@@ -66,7 +66,7 @@
 
     <main class="loader" id="gameInput">
         <div class="hero-section">
-            <img src="assets/logo.png" alt="SaneGames Logo" style="width:100px; display:block; margin: 0 auto 1em auto;" />
+            <img src="assets/logo.png" alt="SaneGames Logo" style="width:60px; display:block; margin: 0 auto 0.5em auto;" />
             <h1>Welcome to <b>SaneGames.</b></h1>
             <h2 id="tagline">
                 A better client for all CrazyGames games, with no ads or annoying UI.
@@ -74,11 +74,11 @@
         </div>
 
         <section id="main-content" aria-label="Game loading options">
-            <h3>📌 Option 1: Use the Bookmarklet (Recommended)</h3>
+            <h3>📌 Use the Bookmarklet (Recommended)</h3>
             <p>
-                To easily upgrade your gaming experience, drag the button below to your bookmarks bar. Then, when you're on a CrazyGames game page, just click the bookmarklet!
+                Drag this button to your bookmarks bar, then click it when you're on a CrazyGames game page:
             </p>
-            <div style="text-align: center;">
+            <div style="text-align: center; margin: 0.8em 0;">
                 <a href="javascript:(function(){const s='sanegames.elouan.xyz',h=window.location.hostname,f=window.location.href;if(h===s){alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!')}else{const r=/crazygames\.(?:com|id|dev|co\.uk|net|org|[a-z]{2})\/game\/([^\/?#]+)/,m=f.match(r);if(m&&m[1]){const g=m[1],n=`https://sanegames.elouan.xyz/?game=${g}`;window.location.href=n}else{alert('Please navigate to a CrazyGames game page first, then click the bookmarklet.')}}})();"
                     class="bookmarklet-button" draggable="true"
                     onclick="event.preventDefault(); alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!');"
@@ -87,18 +87,17 @@
                     ▶️ Play Sane
                 </a>
             </div>
-            <p style="text-align: center; font-size: 0.95em; margin-top: 1.5em;">
-                Now head to <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>, find a game, and click your bookmarklet!
+            <p style="text-align: center; font-size: 0.85em; margin-top: 0.8em;">
+                Then go to <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a> and click the bookmarklet on any game!
             </p>
         </section>
 
         <section>
-            <h3>⌨️ Option 2: Enter Game Slug Manually</h3>
+            <h3>⌨️ Or Enter Game Slug Manually</h3>
             <p>
-                Alternatively, find a game on <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>. The URL in your address bar will look something like <code>https://www.crazygames.com/game/your-game-slug</code>.
+                Find a game on <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>. Copy the slug from the URL (e.g., <code>crazy-flips-3d</code>) and paste below.
             </p>
-            <p>Copy the <code>your-game-slug</code> part and paste it below.</p>
-            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 2em 0;">
+            <div style="display: flex; gap: 8px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin: 1em 0;">
                 <div>
                     <label for="gameSlugInput" class="input-label">Game Slug:</label>
                     <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
@@ -113,7 +112,7 @@
                     <a href="https://github.com/sanegamz/sanegamz.github.io" rel="noopener noreferrer">Open Source</a>!</i>
             </p>
             <nav aria-label="Footer links">
-                <a href="/privacypolicy">Privacy Policy | SaneGames is not affiliated with CrazyGames or other IP in any way.</a>
+                <a href="/privacypolicy">Privacy Policy</a> | SaneGames is not affiliated with CrazyGames or other IP in any way.
             </nav>
         </footer>
     </main>
@@ -134,7 +133,6 @@
 
 		<h3 onclick="closeRecommendations()" style="cursor: pointer; color: #e0d9ff;">Close</h3>
 	</div>
-	-->
 
     <script src="main.js"></script>
 </body>
