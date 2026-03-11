@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>SaneGames Beta - Direct Runtime Loader</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+
+    <meta name="description" content="Experimental SaneGames launcher that tries to run supported games directly without the CrazyGames embed shell." />
+    <meta name="theme-color" content="#5335CC" />
+
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/beta/beta.css" />
+</head>
+
+<body>
+    <div class="loader" id="loader" aria-label="Loading game...">Loading…</div>
+
+    <main class="loader" id="gameInput">
+        <div class="hero-section">
+            <img src="/assets/logo.png" alt="SaneGames Logo" class="hero-logo" />
+            <h1>SaneGames <b>Beta</b></h1>
+            <h2 id="tagline">The same shell, but with direct loaders for supported games.</h2>
+            <p class="beta-note">Unity games are loaded from their raw build files when possible. Iframe-only games still need an iframe.</p>
+        </div>
+
+        <section aria-label="Game loading options">
+            <h3>Try a Game</h3>
+            <p>Paste a CrazyGames slug to test the direct runtime path. Examples: <code>crazy-flips-3d</code>, <code>havendock</code>.</p>
+            <div class="game-input-row">
+                <div>
+                    <label for="gameSlugInput" class="input-label">Game Slug:</label>
+                    <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
+                </div>
+                <button onclick="loadGameFromInput()" aria-label="Load and play the entered game">Play Game</button>
+            </div>
+        </section>
+
+        <section aria-label="Beta notes">
+            <h3>What This Beta Does</h3>
+            <p>It fetches the same CrazyGames config, but skips the CrazyGames SDK. Supported loaders boot directly inside this page.</p>
+            <p>Current support: Unity <code>unity2020</code>, <code>unity2021</code>, <code>unity2022</code>, <code>unity2023</code>, plus raw <code>iframe</code> fallback.</p>
+        </section>
+
+        <section id="recommendationsSection">
+            <h3>Quick Tests</h3>
+            <div class="recommendation-grid">
+                <a href="?game=ragdoll-archers">Ragdoll Archers</a>
+                <a href="?game=havendock">Havendock</a>
+                <a href="?game=crazy-flips-3d">Crazy Flips 3D</a>
+            </div>
+        </section>
+
+        <footer>
+            <p><i>Beta launcher for experimenting with direct game boot.</i></p>
+            <nav aria-label="Footer links">
+                <a href="/">Main Site</a> | <a href="/privacypolicy">Privacy Policy</a>
+            </nav>
+        </footer>
+    </main>
+
+    <section id="gameStage" aria-live="polite" hidden>
+        <div class="stage-header">
+            <div>
+                <p class="stage-eyebrow">Testing Runtime</p>
+                <h2 id="stageTitle">Loading game</h2>
+            </div>
+            <div class="stage-actions">
+                <button id="reloadButton" type="button">Reload</button>
+                <button id="backButton" type="button">Choose another game</button>
+            </div>
+        </div>
+
+        <div id="statusPanel" class="status-panel">
+            <p id="statusText">Preparing launcher…</p>
+            <div id="progressTrack" class="progress-track" aria-hidden="true">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="warningList" class="warning-list"></div>
+        </div>
+
+        <div id="gameViewport" class="game-viewport"></div>
+        <div id="gameMeta" class="game-meta"></div>
+    </section>
+
+    <script src="/palmframe.js"></script>
+    <palmframe-widget project="w82cB8t3Jgv0"></palmframe-widget>
+    <script src="/beta/main.js"></script>
+</body>
+
+</html>
