@@ -597,7 +597,7 @@
           </div>
           <button class="pf-send-btn" disabled>${this.t.send}</button>
         </footer>
-        <div class="pf-powered">${this.t.poweredBy} <a href="https://www.palmframe.com" target="_blank" rel="noopener">Palmframe</a></div>
+        <!--<div class="pf-powered">${this.t.poweredBy} <a href="https://www.palmframe.com" target="_blank" rel="noopener">Palmframe</a></div>-->
       </div>
     `
         }
