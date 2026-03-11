@@ -400,6 +400,15 @@ async function fetchGameConfig(gameSlug) {
     return null;
 }
 
+function setFeedbackWidgetVisibility(isVisible) {
+    if (typeof document === "undefined") return;
+
+    const feedbackWidget = document.querySelector("palmframe-widget");
+    if (feedbackWidget) {
+        feedbackWidget.hidden = !isVisible;
+    }
+}
+
 async function loadGame() {
     if (typeof window === "undefined" || typeof document === "undefined")
         return;
@@ -410,6 +419,7 @@ async function loadGame() {
     let gameInput = document.getElementById("gameInput");
 
     if (!gameSlug) {
+        setFeedbackWidgetVisibility(true);
         if (loader) loader.style.display = "none";
         if (gameInput) gameInput.classList.add("active");
         stopPollingForUiModifications(); // Stop polling if no game to load
@@ -424,6 +434,7 @@ async function loadGame() {
 
     let options = await fetchGameConfig(gameSlug);
     if (!options) {
+        setFeedbackWidgetVisibility(true);
         if (loader) {
             loader.textContent =
                 "Loading failed. Could not fetch game configuration. The game slug might be incorrect, the game might not exist, or all our proxy services are down. Please try again later or check the slug.";
@@ -460,6 +471,7 @@ async function loadGame() {
             "SaneGames: Crazygames SDK script failed to load from:",
             sdkScriptUrl
         );
+        setFeedbackWidgetVisibility(true);
         if (loader) {
             loader.textContent =
                 "Failed to load the CrazyGames SDK script. Please check your internet connection or an adblocker might be blocking the SDK URL. Try again later.";
@@ -484,6 +496,7 @@ async function loadGame() {
                         "SaneGames: Game loaded successfully:",
                         options.gameName || gameSlug
                     );
+                    setFeedbackWidgetVisibility(false);
                     if (loader) loader.remove();
                     if (gameInput) gameInput.remove();
                     startPollingForUiModifications(); // START POLLING AFTER GAME IS LOADED
@@ -523,6 +536,7 @@ async function loadGame() {
                     errorMessage +=
                         "Check the browser console (F12) for more specific details. You can try a different game.";
 
+                    setFeedbackWidgetVisibility(true);
                     if (loader) {
                         loader.textContent = errorMessage;
                         loader.style.display = "flex";
@@ -537,6 +551,7 @@ async function loadGame() {
             console.error(
                 "SaneGames: Crazygames SDK loaded, but window.Crazygames.load is not available or SDK is malformed."
             );
+            setFeedbackWidgetVisibility(true);
             if (loader) {
                 loader.textContent =
                     "CrazyGames SDK loaded incorrectly. The SaneGames client might be outdated, or there's an issue with the SDK itself. Try refreshing.";

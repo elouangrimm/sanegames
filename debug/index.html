@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Debug - SaneGames</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+        .debug-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .debug-card {
+            width: min(900px, 100%);
+            padding: 32px;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(12px);
+        }
+
+        .debug-form {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin: 24px 0 20px;
+        }
+
+        .debug-field {
+            flex: 1 1 280px;
+        }
+
+        .debug-field input {
+            max-width: none;
+        }
+
+        .debug-status {
+            min-height: 24px;
+            margin: 0 0 16px;
+            color: #cbd5e1;
+        }
+
+        .debug-output {
+            margin: 0;
+            padding: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            overflow: auto;
+            min-height: 320px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        @media (max-width: 640px) {
+            .debug-card {
+                padding: 20px;
+            }
+
+            .debug-form button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="debug-shell">
+        <section class="debug-card" aria-labelledby="debug-title">
+            <div class="hero-section">
+                <img src="/assets/logo.png" alt="SaneGames Logo" style="width:60px; display:block; margin: 0 auto 0.5em auto;" />
+                <h1 id="debug-title">Game Options <b>Debug</b></h1>
+                <h2 id="tagline">
+                    Enter a CrazyGames slug to fetch the page config and log the parsed <code>options</code> JSON.
+                </h2>
+            </div>
+
+            <p>
+                Example slug: <code>crazy-flips-3d</code>. The parsed JSON is shown below and also logged to the browser console.
+            </p>
+
+            <form class="debug-form" id="debugForm">
+                <div class="debug-field">
+                    <label for="gameSlugInput" class="input-label">Game Slug</label>
+                    <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" autocomplete="off" aria-label="Game slug input field" />
+                </div>
+                <button type="submit" id="loadButton">Fetch Options</button>
+            </form>
+
+            <p class="debug-status" id="statusMessage" aria-live="polite">Enter a slug to begin.</p>
+
+            <pre class="debug-output" id="jsonOutput">Waiting for input...</pre>
+        </section>
+    </main>
+
+    <script src="debug.js" defer></script>
+</body>
+
+</html>
