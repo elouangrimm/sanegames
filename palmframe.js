@@ -248,7 +248,6 @@
 
     render() {
       const showMenu = hasLinks(this.links);
-      this.setAttribute("position", this.config.position);
 
       const sentimentButtons = SENTIMENTS.map((sentiment) => {
         const isSelected = this.selectedSentiment === sentiment ? " pf-selected" : "";
