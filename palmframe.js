@@ -66,49 +66,50 @@
         S = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>',
         M = ["hate", "dislike", "neutral", "love"],
         g = `
-    --pf-background: oklch(0.145 0 0);
-    --pf-foreground: oklch(0.985 0 0);
-    --pf-primary: oklch(0.985 0 0);
-    --pf-primary-foreground: oklch(0.205 0 0);
-    --pf-primary-hover: oklch(0.9 0 0);
-    --pf-muted: oklch(0.269 0 0);
-    --pf-muted-foreground: oklch(0.708 0 0);
-    --pf-accent: oklch(0.269 0 0);
-    --pf-border: oklch(0.269 0 0);
-    --pf-input: oklch(0.269 0 0);
-    --pf-ring: oklch(0.556 0 0);
-    --pf-ring-shadow: oklch(0.556 0 0 / 0.5);
-    --pf-link: oklch(0.707 0.165 254.624);
-    --pf-link-hover: oklch(0.623 0.214 259.815);
+    --pf-background: rgba(15, 23, 42, 0.96);
+    --pf-background: rgba(15, 23, 42, 0.96);
+    --pf-foreground: #f1f5f9;
+    --pf-primary: #5335cc;
+    --pf-primary-foreground: #ffffff;
+    --pf-primary-hover: #6842d6;
+    --pf-muted: rgba(51, 65, 85, 0.92);
+    --pf-muted-foreground: #cbd5e1;
+    --pf-accent: rgba(83, 53, 204, 0.14);
+    --pf-border: rgba(167, 139, 250, 0.24);
+    --pf-input: rgba(100, 116, 139, 0.45);
+    --pf-ring: #a78bfa;
+    --pf-ring-shadow: rgba(167, 139, 250, 0.28);
+    --pf-link: #a78bfa;
+    --pf-link-hover: #d8b4fe;
     --pf-sentiment-hate: #60a5fa;
     --pf-sentiment-love: #fbbf24;
-    --pf-backdrop: rgba(0, 0, 0, 0.6);
-    --pf-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+    --pf-backdrop: rgba(2, 6, 23, 0.72);
+    --pf-shadow: 0 -24px 60px rgba(2, 6, 23, 0.5);
 `,
         z = `
   :host {
     all: initial;
     color-scheme: light;
-    --pf-background: oklch(1 0 0);
-    --pf-foreground: oklch(0.145 0 0);
-    --pf-primary: oklch(0.205 0 0);
-    --pf-primary-foreground: oklch(0.985 0 0);
-    --pf-primary-hover: oklch(0.37 0 0);
-    --pf-muted: oklch(0.97 0 0);
-    --pf-muted-foreground: oklch(0.556 0 0);
-    --pf-accent: oklch(0.97 0 0);
-    --pf-border: oklch(0.922 0 0);
-    --pf-input: oklch(0.922 0 0);
-    --pf-ring: oklch(0.708 0 0);
-    --pf-ring-shadow: oklch(0.708 0 0 / 0.5);
-    --pf-radius: 0.625rem;
-    --pf-link: oklch(0.623 0.214 259.815);
-    --pf-link-hover: oklch(0.546 0.245 262.881);
-    --pf-sentiment-hate: #1d4ed8;
-    --pf-sentiment-love: #b45309;
-    --pf-backdrop: rgba(0, 0, 0, 0.4);
-    --pf-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pf-background: rgba(15, 23, 42, 0.96);
+    --pf-foreground: #f1f5f9;
+    --pf-primary: #5335cc;
+    --pf-primary-foreground: #ffffff;
+    --pf-primary-hover: #6842d6;
+    --pf-muted: rgba(51, 65, 85, 0.92);
+    --pf-muted-foreground: #cbd5e1;
+    --pf-accent: rgba(83, 53, 204, 0.14);
+    --pf-border: rgba(167, 139, 250, 0.24);
+    --pf-input: rgba(100, 116, 139, 0.45);
+    --pf-ring: #a78bfa;
+    --pf-ring-shadow: rgba(167, 139, 250, 0.28);
+    --pf-link: #a78bfa;
+    --pf-link-hover: #d8b4fe;
+    --pf-sentiment-hate: #60a5fa;
+    --pf-sentiment-love: #fbbf24;
+    --pf-backdrop: rgba(2, 6, 23, 0.72);
+    --pf-shadow: 0 -24px 60px rgba(2, 6, 23, 0.5);
+    --pf-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 
   :host([theme="dark"]) { color-scheme: dark; ${g} }
