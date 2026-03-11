@@ -306,6 +306,7 @@ function buildUnityConfig(options) {
         productName: unityConfigOptions.productName || options.gameName || options.gameSlug || "Unity Game",
         productVersion: unityConfigOptions.productVersion || options.buildId || "1.0",
         devicePixelRatio: 1,
+        keyboardListeningElement: unityConfigOptions.keyboardListeningElement || document,
         showBanner(message, level) {
             addWarning(message, level === "error" ? "error" : "warning");
         },
@@ -328,8 +329,10 @@ async function launchUnityGame(options) {
 
     const gameViewport = getElement("gameViewport");
     const canvas = document.createElement("canvas");
+    canvas.id = `unity-canvas-${options.gameSlug || "player"}`;
     canvas.className = "unity-canvas";
     canvas.setAttribute("tabindex", "0");
+    canvas.setAttribute("aria-label", `${options.gameName || options.gameSlug || "Unity game"} canvas`);
 
     gameViewport.appendChild(canvas);
 
@@ -356,6 +359,7 @@ async function launchUnityGame(options) {
 
     setProgress(1);
     setStatus("Unity game loaded.");
+    canvas.focus();
 }
 
 function launchIframeGame(options) {
@@ -447,7 +451,17 @@ async function loadGame() {
     }
 
     document.title = `${options.gameName || gameSlug} | SaneGames Beta`;
-    await launchGame(options, gameSlug);
+
+    try {
+        await launchGame(options, gameSlug);
+    } catch (error) {
+        console.error("SaneGames Beta: Game launch failed", error);
+        showStage(options.gameName || gameSlug);
+        setStageMetadata(options);
+        setProgress(undefined);
+        setStatus(error.message || "The game failed to boot.", "error");
+        addWarning(error.message || "The game failed to boot.", "error");
+    }
 }
 
 function loadGameFromInput() {
