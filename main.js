@@ -11,6 +11,23 @@ const adBlockList = [
     "imasdk.googleapis.com",
 ];
 
+const CRAZYGAMES_API_BASE = "https://api.crazygames.com/v4/en_US";
+const BROWSE_TERMS = [
+    "action",
+    "io",
+    "driving",
+    "shooting",
+    "multiplayer",
+    "horror",
+    "puzzle",
+    "sports",
+    "2 player",
+];
+const PLAYED_GAMES_STORAGE_KEY = "sanegames.recentlyPlayed";
+
+let cachedTopGames = [];
+let explorerInitialized = false;
+
 // --- Constants for UI Modification & Polling ---
 const BUTTON_TO_MODIFY_TEXT_SELECTOR = ".MuiButtonBase-root.css-1fs4034";
 const BUTTON_NEW_TEXT = "Continue (CLICK HERE)";
@@ -338,6 +355,274 @@ if (typeof window !== "undefined" && typeof MutationObserver !== "undefined") {
     startObserver();
 }
 
+function normalizeCoverPath(game) {
+    if (!game) return "";
+    const coverPath = (game.covers && game.covers["16x9"]) || game.cover || "";
+    if (!coverPath) return "";
+    if (coverPath.startsWith("http://") || coverPath.startsWith("https://")) {
+        return coverPath;
+    }
+    return `https://imgs.crazygames.com/${coverPath}`;
+}
+
+function escapeHtml(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function getGameBadges(game) {
+    const badges = [];
+    if (game.mobileFriendly) badges.push("Mobile");
+    if (game.hasIap) badges.push("IAP");
+    if (game.categoryName) badges.push(String(game.categoryName));
+    return badges.slice(0, 3);
+}
+
+function filterGames(records) {
+    if (!Array.isArray(records)) return [];
+    return records.filter((item) => item && item.recordType === "game");
+}
+
+function filterTags(records) {
+    if (!Array.isArray(records)) return [];
+    return records.filter((item) => item && item.recordType === "tag").slice(0, 8);
+}
+
+function setSearchSummary(text) {
+    const label = document.getElementById("activeBrowseTerm");
+    if (label) label.textContent = text || "";
+}
+
+function setSearchBusy(isBusy) {
+    const searchButton = document.getElementById("searchGamesButton");
+    if (!searchButton) return;
+    searchButton.disabled = isBusy;
+    searchButton.textContent = isBusy ? "Searching..." : "Search";
+}
+
+function renderGameGrid(targetId, games, emptyText = "No games found.") {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    if (!games || games.length === 0) {
+        target.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+        return;
+    }
+
+    target.innerHTML = games
+        .map((game) => {
+            const slug = game.slug || "";
+            const gameName = game.name || slug;
+            const coverUrl = normalizeCoverPath(game);
+            const safeSlug = escapeHtml(slug);
+            const safeGameName = escapeHtml(gameName);
+            const safeCoverUrl = escapeHtml(coverUrl);
+            const badges = getGameBadges(game)
+                .map((badge) => `<span class="status-badge">${escapeHtml(badge)}</span>`)
+                .join("");
+
+            return `
+                <a href="?game=${encodeURIComponent(slug)}" class="game-card js-play-game" data-slug="${safeSlug}" data-name="${safeGameName}">
+                    <img class="game-thumb" src="${safeCoverUrl}" alt="${safeGameName} cover" loading="lazy" />
+                    <div class="game-card-content">
+                        <span class="game-title">${safeGameName}</span>
+                        <div class="game-meta">${badges}</div>
+                    </div>
+                </a>
+            `;
+        })
+        .join("");
+}
+
+function renderTagSuggestions(tags) {
+    const target = document.getElementById("searchTags");
+    if (!target) return;
+
+    if (!tags.length) {
+        target.innerHTML = "";
+        return;
+    }
+
+    target.innerHTML = tags
+        .map((tag) => {
+            const term = tag.slug || tag.enSlug || "";
+            const title = tag.title || tag.name || term;
+            return `<button class="tag-chip" data-browse-term="${escapeHtml(term)}" type="button">${escapeHtml(title)}</button>`;
+        })
+        .join("");
+}
+
+function renderBrowsePills() {
+    const target = document.getElementById("browsePills");
+    if (!target) return;
+
+    target.innerHTML = BROWSE_TERMS.map(
+        (term) =>
+            `<button type="button" class="pill-button" data-browse-term="${escapeHtml(term)}">${escapeHtml(term)}</button>`
+    ).join("");
+}
+
+function trackPlayedGame(slug, name) {
+    if (!slug || typeof window === "undefined") return;
+
+    try {
+        const existing = JSON.parse(
+            window.localStorage.getItem(PLAYED_GAMES_STORAGE_KEY) || "[]"
+        );
+        const sanitized = Array.isArray(existing) ? existing : [];
+        const withoutCurrent = sanitized.filter((entry) => entry.slug !== slug);
+        withoutCurrent.unshift({ slug, name: name || slug, ts: Date.now() });
+        window.localStorage.setItem(
+            PLAYED_GAMES_STORAGE_KEY,
+            JSON.stringify(withoutCurrent.slice(0, 12))
+        );
+    } catch (error) {
+        console.warn("SaneGames: Failed storing played game.", error);
+    }
+}
+
+async function fetchSearchResults(query, limit = 24, includeTopGames = false) {
+    const url = `${CRAZYGAMES_API_BASE}/search?q=${encodeURIComponent(
+        query
+    )}&limit=${limit}&device=desktop&includeTopGames=${String(includeTopGames)}`;
+    const response = await fetchWithTimeout(url, 8000);
+    if (!response.ok) {
+        throw new Error(`Search request failed (${response.status})`);
+    }
+    return response.json();
+}
+
+async function refreshTopGames() {
+    try {
+        const response = await fetchSearchResults("", 24, true);
+        cachedTopGames = filterGames(response.topGames || []);
+        renderGameGrid(
+            "topGamesGrid",
+            cachedTopGames,
+            "Could not load top games from the API right now."
+        );
+    } catch (error) {
+        console.error("SaneGames: failed to load top games", error);
+        renderGameGrid(
+            "topGamesGrid",
+            [],
+            "Could not load top games from the API right now."
+        );
+    }
+}
+
+async function runGameSearch(rawQuery) {
+    const query = (rawQuery || "").trim();
+    if (!query) {
+        setSearchSummary("Type a game name, genre, or tag to search.");
+        renderGameGrid("searchResults", [], "Search results will appear here.");
+        renderTagSuggestions([]);
+        return;
+    }
+
+    setSearchBusy(true);
+    setSearchSummary(`Searching for "${query}"...`);
+
+    try {
+        const response = await fetchSearchResults(query, 36, true);
+        let games = filterGames(response.result);
+        if (!games.length) {
+            games = filterGames(response.topGames);
+        }
+
+        const tags = filterTags(response.result);
+        renderTagSuggestions(tags);
+        renderGameGrid(
+            "searchResults",
+            games,
+            "No matching games found. Try another term."
+        );
+        setSearchSummary(`Found ${games.length} game${games.length === 1 ? "" : "s"} for "${query}".`);
+    } catch (error) {
+        console.error("SaneGames: search failed", error);
+        setSearchSummary("Search failed. The CrazyGames API might be rate-limiting or unavailable.");
+        renderGameGrid(
+            "searchResults",
+            [],
+            "Search failed. Try again in a moment."
+        );
+    } finally {
+        setSearchBusy(false);
+    }
+}
+
+function openRandomTopGame() {
+    if (!cachedTopGames.length) return;
+    const randomGame =
+        cachedTopGames[Math.floor(Math.random() * cachedTopGames.length)];
+    trackPlayedGame(randomGame.slug, randomGame.name);
+    window.location.href = `?game=${encodeURIComponent(randomGame.slug)}`;
+}
+
+function initExplorerUi() {
+    if (explorerInitialized || typeof document === "undefined") return;
+    explorerInitialized = true;
+
+    const searchInput = document.getElementById("gameSearchInput");
+    const searchButton = document.getElementById("searchGamesButton");
+    const surpriseButton = document.getElementById("surpriseButton");
+    const playSlugButton = document.getElementById("playSlugButton");
+
+    renderBrowsePills();
+    setSearchSummary("Loading top games...");
+    refreshTopGames().then(() => {
+        setSearchSummary("Try a query or tap a theme to explore.");
+    });
+
+    if (searchButton && searchInput) {
+        searchButton.addEventListener("click", () => runGameSearch(searchInput.value));
+    }
+
+    if (surpriseButton) {
+        surpriseButton.addEventListener("click", openRandomTopGame);
+    }
+
+    if (playSlugButton) {
+        playSlugButton.addEventListener("click", loadGameFromInput);
+    }
+
+    document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const browseButton = target.closest("[data-browse-term]");
+        if (browseButton) {
+            const browseTerm = browseButton.getAttribute("data-browse-term");
+            if (searchInput && browseTerm) {
+                searchInput.value = browseTerm;
+                runGameSearch(browseTerm);
+            }
+            return;
+        }
+
+        const playCard = target.closest(".js-play-game");
+        if (playCard) {
+            trackPlayedGame(
+                playCard.getAttribute("data-slug"),
+                playCard.getAttribute("data-name")
+            );
+        }
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                runGameSearch(searchInput.value);
+            }
+        });
+    }
+}
+
 async function fetchWithTimeout(url, timeout = 5000) {
     return Promise.race([
         fetch(url),
@@ -422,6 +707,7 @@ async function loadGame() {
         setFeedbackWidgetVisibility(true);
         if (loader) loader.style.display = "none";
         if (gameInput) gameInput.classList.add("active");
+        initExplorerUi();
         stopPollingForUiModifications(); // Stop polling if no game to load
         return;
     }
@@ -496,6 +782,7 @@ async function loadGame() {
                         "SaneGames: Game loaded successfully:",
                         options.gameName || gameSlug
                     );
+                    trackPlayedGame(gameSlug, options.gameName || gameSlug);
                     setFeedbackWidgetVisibility(false);
                     if (loader) loader.remove();
                     if (gameInput) gameInput.remove();
@@ -574,6 +861,7 @@ function loadGameFromInput() {
     if (gameSlugInput) {
         let gameSlug = gameSlugInput.value.trim();
         if (gameSlug) {
+            trackPlayedGame(gameSlug, gameSlug);
             let currentUrl = new URL(window.location.href);
             currentUrl.search = `?game=${encodeURIComponent(gameSlug)}`;
             window.location.href = currentUrl.toString();
@@ -583,30 +871,7 @@ function loadGameFromInput() {
     }
 }
 
-function recommendations() {
-    if (typeof document === "undefined") return;
-    const popup = document.getElementById("recommendationsPopup");
-    if (popup) popup.classList.add("active");
-}
-
-function closeRecommendations() {
-    if (typeof document === "undefined") return;
-    const popup = document.getElementById("recommendationsPopup");
-    if (popup) popup.classList.remove("active");
-}
-
 if (typeof window !== "undefined") {
-    window.onclick = function (event) {
-        if (typeof document === "undefined") return;
-        const popup = document.getElementById("recommendationsPopup");
-        if (
-            popup &&
-            event.target == popup &&
-            popup.classList.contains("active")
-        ) {
-            closeRecommendations();
-        }
-    };
     window.addEventListener("beforeunload", stopPollingForUiModifications);
 
     // Keyboard shortcuts
@@ -616,9 +881,9 @@ if (typeof window !== "undefined") {
         // Forward slash to focus search
         if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
             e.preventDefault();
-            const gameInput = document.getElementById("gameSlugInput");
-            if (gameInput) {
-                gameInput.focus();
+            const searchInput = document.getElementById("gameSearchInput");
+            if (searchInput) {
+                searchInput.focus();
             }
         }
         
@@ -631,7 +896,7 @@ if (typeof window !== "undefined") {
         // Question mark for help/shortcuts (could expand later)
         if (e.key === "?" && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
-            console.log("SaneGames Keyboard Shortcuts:\n/ - Focus game search\nEnter - Load game (when in search)\n? - Show help");
+            console.log("SaneGames Keyboard Shortcuts:\n/ - Focus API search\nEnter - Search from search box or launch from slug box\n? - Show help");
         }
     });
 }
