@@ -59,43 +59,64 @@
 
     <main class="loader" id="gameInput">
         <div class="hero-section">
-            <img src="assets/logo.png" alt="SaneGames Logo" style="width:60px; display:block; margin: 0 auto 0.5em auto;" />
+            <img src="assets/logo.png" alt="SaneGames Logo" class="hero-logo" />
             <h1>Welcome to <b>SaneGames.</b></h1>
             <h2 id="tagline">
-                A better client for all CrazyGames games, with no ads or annoying UI.
+                Search and browse CrazyGames fast, then play without all the extra clutter.
             </h2>
         </div>
 
-        <section id="main-content" aria-label="Game loading options">
-            <h3>📌 Use the Bookmarklet (Recommended)</h3>
+        <section class="search-panel" aria-label="Search CrazyGames titles">
+            <h3>Find Games</h3>
+            <p class="subtle-copy">Powered by the CrazyGames public API search endpoint.</p>
+            <div class="search-row">
+                <div class="search-input-wrap">
+                    <label for="gameSearchInput" class="input-label">Search</label>
+                    <input type="text" placeholder="Try: io, racing, horror, action..." id="gameSearchInput" aria-label="Search games" />
+                </div>
+                <button id="searchGamesButton" type="button" aria-label="Search games">Search</button>
+                <button id="surpriseButton" type="button" class="secondary-button" aria-label="Play a random popular game">Surprise Me</button>
+            </div>
+            <div id="activeBrowseTerm" class="browse-meta" aria-live="polite"></div>
+            <div id="searchTags" class="tag-row" aria-label="Search tags"></div>
+            <div id="searchResults" class="game-grid" aria-live="polite"></div>
+        </section>
+
+        <section class="browse-panel" aria-label="Browse by themes">
+            <h3>Browse Themes</h3>
+            <div id="browsePills" class="pill-row"></div>
+        </section>
+
+        <section class="top-panel" aria-label="Top games">
+            <h3>Top Picks Right Now</h3>
+            <div id="topGamesGrid" class="game-grid"></div>
+        </section>
+
+        <section>
+            <h3>Manual Slug Launch</h3>
             <p>
-                Drag this button to your bookmarks bar, then click it when you're on a CrazyGames game page:
+                Know the exact slug? Paste it here (example: <code>crazy-flips-3d</code>) and launch immediately.
             </p>
+            <div class="manual-row">
+                <div>
+                    <label for="gameSlugInput" class="input-label">Game Slug</label>
+                    <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
+                </div>
+                <button id="playSlugButton" type="button" aria-label="Load and play the entered game">Play Slug</button>
+            </div>
+        </section>
+
+        <section aria-label="Bookmarklet">
+            <h3>Bookmarklet</h3>
+            <p>Drag this button to your bookmarks bar, then click it on any CrazyGames game page.</p>
             <div style="text-align: center; margin: 0.8em 0;">
                 <a href="javascript:(function(){const s='sanegames.elouan.xyz',h=window.location.hostname,f=window.location.href;if(h===s){alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!')}else{const r=/crazygames\.(?:com|id|dev|co\.uk|net|org|[a-z]{2})\/game\/([^\/?#]+)/,m=f.match(r);if(m&&m[1]){const g=m[1],n=`https://sanegames.elouan.xyz/?game=${g}`;window.location.href=n}else{alert('Please navigate to a CrazyGames game page first, then click the bookmarklet.')}}})();"
                     class="bookmarklet-button" draggable="true"
                     onclick="event.preventDefault(); alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!');"
                     role="button"
                     aria-label="Drag to bookmarks bar to install SaneGames bookmarklet">
-                    ▶️ Play Sane
+                    Play Sane
                 </a>
-            </div>
-            <p style="text-align: center; font-size: 0.85em; margin-top: 0.8em;">
-                Then go to <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a> and click the bookmarklet on any game!
-            </p>
-        </section>
-
-        <section>
-            <h3>⌨️ Or Enter Game Slug Manually</h3>
-            <p>
-                Find a game on <a href="https://www.crazygames.com/" rel="noopener noreferrer">CrazyGames</a>. Copy the slug from the URL (e.g., <code>crazy-flips-3d</code>) and paste below.
-            </p>
-            <div style="display: flex; gap: 8px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin: 1em 0;">
-                <div>
-                    <label for="gameSlugInput" class="input-label">Game Slug:</label>
-                    <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
-                </div>
-                <button onclick="loadGameFromInput()" aria-label="Load and play the entered game">Play Game</button>
             </div>
         </section>
 
@@ -109,23 +130,6 @@
             </nav>
         </footer>
     </main>
-	<div id="recommendationsPopup">
-		<h2>Game Recommendations</h2>
-		<p>Below are a few half-decent games.</p>
-		<ul>
-			<li>
-				<a href="?game=ragdoll-archers" onclick="closeRecommendations()">Ragdoll Archers</a>
-			</li>
-			<li>
-				<a href="?game=havendock" onclick="closeRecommendations()">Havendock</a>
-			</li>
-			<li>
-				<a href="?game=crazy-flips-3d" onclick="closeRecommendations()">Crazy Flips 3D</a>
-			</li>
-		</ul>
-
-		<h3 onclick="closeRecommendations()" style="cursor: pointer; color: #e0d9ff;">Close</h3>
-	</div>
 
     <script src="palmframe.js"></script>
     <palmframe-widget project="w82cB8t3Jgv0" />
