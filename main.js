@@ -11,6 +11,12 @@ const adBlockList = [
     "imasdk.googleapis.com",
 ];
 
+// Dev-only ad test mode. Keep false for production.
+const DEV_AD_TEST_MODE = false;
+const DEV_AUTO_CONTINUE_BUTTON_ID = "mainContinuePlayingButton";
+const DEV_AD_TIMEOUT_MIN_MS = 2000;
+const DEV_AD_TIMEOUT_REPLACEMENT_MS = 0;
+
 const CRAZYGAMES_API_BASE = "https://api.crazygames.com/v4/en_US";
 const BROWSE_TERMS = [
     "action",
@@ -24,9 +30,20 @@ const BROWSE_TERMS = [
     "2 player",
 ];
 const PLAYED_GAMES_STORAGE_KEY = "sanegames.recentlyPlayed";
+const UI_SETTINGS_STORAGE_KEY = "sanegames.uiSettings";
+
+const defaultUiSettings = {
+    disableApiBrowsing: false,
+    disableTopGames: false,
+    disablePalmframe: false,
+};
 
 let cachedTopGames = [];
 let explorerInitialized = false;
+let uiSettings = { ...defaultUiSettings };
+let searchHasRun = false;
+let topGamesVisibleCount = 8;
+const TOP_GAMES_PAGE_SIZE = 8;
 
 // --- Constants for UI Modification & Polling ---
 const BUTTON_TO_MODIFY_TEXT_SELECTOR = ".MuiButtonBase-root.css-1fs4034";
@@ -51,7 +68,53 @@ let buttonTextModified = false;
 let divOneTextModified = false;
 let divTwoTextModified = false;
 
+function shouldFastTrackAdTimer(callbackSource, delay) {
+    if (delay < DEV_AD_TIMEOUT_MIN_MS) return false;
+    return /(ad|fallback|securitycountdown|onadcompleted|cooldown|midroll|rewarded|preroll|requested|displaying)/i.test(
+        callbackSource
+    );
+}
+
+function enableDevAdTestingPatches() {
+    if (!DEV_AD_TEST_MODE || typeof window === "undefined") return;
+    if (window.__sanegamesDevAdPatchesEnabled) return;
+    window.__sanegamesDevAdPatchesEnabled = true;
+
+    const originalSetTimeout = window.setTimeout.bind(window);
+    window.setTimeout = function (callback, delay = 0, ...args) {
+        let adjustedDelay = delay;
+        try {
+            const numericDelay = Number(delay) || 0;
+            const callbackSource =
+                typeof callback === "function"
+                    ? Function.prototype.toString.call(callback)
+                    : String(callback || "");
+
+            if (shouldFastTrackAdTimer(callbackSource, numericDelay)) {
+                adjustedDelay = DEV_AD_TIMEOUT_REPLACEMENT_MS;
+                console.warn(
+                    "SaneGames: Dev mode fast-tracked ad timer",
+                    numericDelay,
+                    "ms ->",
+                    adjustedDelay,
+                    "ms"
+                );
+            }
+        } catch (error) {
+            console.error(
+                "SaneGames: Dev mode setTimeout patch failed, using original delay.",
+                error
+            );
+        }
+
+        return originalSetTimeout(callback, adjustedDelay, ...args);
+    };
+
+    console.warn("SaneGames: Dev ad test mode is ENABLED.");
+}
+
 (function blockAds() {
+    if (!DEV_AD_TEST_MODE) return;
     if (typeof window === "undefined") return; // Guard for non-browser environments
 
     let originalFetch = window.fetch;
@@ -133,6 +196,7 @@ let divTwoTextModified = false;
 })();
 
 function applyUiModifications() {
+    if (!DEV_AD_TEST_MODE) return;
     if (typeof document === "undefined") return;
 
     // --- 1. Modify Text Content of Target Elements ---
@@ -204,6 +268,23 @@ function applyUiModifications() {
             }
         });
     });
+
+    const continueButton = document.getElementById(DEV_AUTO_CONTINUE_BUTTON_ID);
+    if (continueButton instanceof HTMLButtonElement) {
+        const lastClickAt = Number(
+            continueButton.getAttribute("data-sanegames-last-autoclick") || "0"
+        );
+        const now = Date.now();
+        const visible = continueButton.offsetParent !== null;
+        if (!continueButton.disabled && visible && now - lastClickAt > 750) {
+            continueButton.setAttribute(
+                "data-sanegames-last-autoclick",
+                String(now)
+            );
+            continueButton.click();
+            console.warn("SaneGames: Dev mode auto-clicked continue button.");
+        }
+    }
 
     // --- 3. Broader ad-blocking/element removal logic ---
     document
@@ -294,6 +375,7 @@ function applyUiModifications() {
 }
 
 function startPollingForUiModifications() {
+    if (!DEV_AD_TEST_MODE) return;
     if (uiModificationPollingInterval) return;
 
     buttonTextModified = false;
@@ -331,11 +413,12 @@ function stopPollingForUiModifications() {
 }
 
 if (typeof window !== "undefined" && typeof MutationObserver !== "undefined") {
-    const observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver(() => {
         applyUiModifications();
     });
 
     const startObserver = () => {
+        if (!DEV_AD_TEST_MODE) return;
         if (document.body) {
             applyUiModifications(); // Initial run
             observer.observe(document.body, {
@@ -384,7 +467,12 @@ function getGameBadges(game) {
 
 function filterGames(records) {
     if (!Array.isArray(records)) return [];
-    return records.filter((item) => item && item.recordType === "game");
+    return records.filter((item) => {
+        if (!item) return false;
+        if (item.recordType === "tag") return false;
+        if (item.recordType === "game") return true;
+        return Boolean(item.slug && item.name);
+    });
 }
 
 function filterTags(records) {
@@ -395,6 +483,129 @@ function filterTags(records) {
 function setSearchSummary(text) {
     const label = document.getElementById("activeBrowseTerm");
     if (label) label.textContent = text || "";
+}
+
+function loadUiSettings() {
+    if (typeof window === "undefined") return { ...defaultUiSettings };
+    try {
+        const parsed = JSON.parse(
+            window.localStorage.getItem(UI_SETTINGS_STORAGE_KEY) || "{}"
+        );
+        return {
+            ...defaultUiSettings,
+            ...parsed,
+        };
+    } catch (error) {
+        console.warn("SaneGames: Failed reading UI settings.", error);
+        return { ...defaultUiSettings };
+    }
+}
+
+function saveUiSettings() {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(UI_SETTINGS_STORAGE_KEY, JSON.stringify(uiSettings));
+}
+
+function updateSettingsUi() {
+    const disableApiToggle = document.getElementById("toggleDisableApi");
+    const disableTopToggle = document.getElementById("toggleDisableTopGames");
+    const disablePalmframeToggle = document.getElementById("toggleDisablePalmframe");
+
+    if (disableApiToggle) disableApiToggle.checked = uiSettings.disableApiBrowsing;
+    if (disableTopToggle) disableTopToggle.checked = uiSettings.disableTopGames;
+    if (disablePalmframeToggle) disablePalmframeToggle.checked = uiSettings.disablePalmframe;
+
+    const explorerPanels = document.getElementById("explorerPanels");
+    const searchPanel = document.getElementById("searchPanel");
+    const resultsPanel = document.getElementById("resultsPanel");
+    const browsePanel = document.getElementById("browsePanel");
+    const apiNotice = document.getElementById("apiDisabledNotice");
+    const topPanel = document.getElementById("topGamesPanel");
+    const surpriseButton = document.getElementById("surpriseButton");
+
+    if (explorerPanels) explorerPanels.hidden = false;
+    if (searchPanel) {
+        searchPanel.hidden = uiSettings.disableApiBrowsing;
+    }
+    if (resultsPanel) {
+        resultsPanel.hidden = uiSettings.disableApiBrowsing || !searchHasRun;
+    }
+    if (browsePanel) {
+        browsePanel.hidden = uiSettings.disableApiBrowsing;
+    }
+    if (apiNotice) {
+        apiNotice.hidden = !uiSettings.disableApiBrowsing;
+    }
+    if (topPanel) {
+        topPanel.hidden = Boolean(uiSettings.disableTopGames || uiSettings.disableApiBrowsing);
+    }
+    if (surpriseButton) {
+        surpriseButton.disabled = Boolean(uiSettings.disableApiBrowsing || uiSettings.disableTopGames);
+    }
+}
+
+function updateTopGamesMoreButton() {
+    const button = document.getElementById("loadMoreTopGamesButton");
+    if (!button) return;
+    if (uiSettings.disableApiBrowsing || uiSettings.disableTopGames || !cachedTopGames.length) {
+        button.hidden = true;
+        return;
+    }
+
+    const remaining = Math.max(0, cachedTopGames.length - topGamesVisibleCount);
+    button.hidden = remaining <= 0;
+    button.textContent = remaining > 0 ? `More (${remaining})` : "More";
+}
+
+function renderTopGamesSection() {
+    const visibleGames = cachedTopGames.slice(0, topGamesVisibleCount);
+    renderGameGrid(
+        "topGamesGrid",
+        visibleGames,
+        "Could not load top games from the API right now."
+    );
+    updateTopGamesMoreButton();
+}
+
+function clearSearchResults() {
+    searchHasRun = false;
+    renderGameGrid("searchResults", [], "Search results will appear here.");
+    renderTagSuggestions([]);
+    setSearchSummary("Try a query or tap a theme to explore.");
+    updateSettingsUi();
+}
+
+function openSettingsModal() {
+    const modal = document.getElementById("settingsModal");
+    if (modal) modal.hidden = false;
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById("settingsModal");
+    if (modal) modal.hidden = true;
+}
+
+function applyUiSettings() {
+    updateSettingsUi();
+    setFeedbackWidgetVisibility(!uiSettings.disablePalmframe);
+
+    if (uiSettings.disableApiBrowsing) {
+        setSearchSummary("API browsing is disabled. Enable it in settings.");
+        updateTopGamesMoreButton();
+        return;
+    }
+
+    if (uiSettings.disableTopGames) {
+        setSearchSummary("Search and themes are active. Top picks are disabled.");
+    } else {
+        setSearchSummary("Try a query or tap a theme to explore.");
+    }
+
+    if (!uiSettings.disableTopGames) {
+        refreshTopGames();
+    } else {
+        updateTopGamesMoreButton();
+    }
 }
 
 function setSearchBusy(isBusy) {
@@ -497,14 +708,17 @@ async function fetchSearchResults(query, limit = 24, includeTopGames = false) {
 }
 
 async function refreshTopGames() {
+    if (uiSettings.disableApiBrowsing || uiSettings.disableTopGames) {
+        renderGameGrid("topGamesGrid", [], "Top picks are disabled in settings.");
+        updateTopGamesMoreButton();
+        return;
+    }
+
     try {
         const response = await fetchSearchResults("", 24, true);
         cachedTopGames = filterGames(response.topGames || []);
-        renderGameGrid(
-            "topGamesGrid",
-            cachedTopGames,
-            "Could not load top games from the API right now."
-        );
+        topGamesVisibleCount = TOP_GAMES_PAGE_SIZE;
+        renderTopGamesSection();
     } catch (error) {
         console.error("SaneGames: failed to load top games", error);
         renderGameGrid(
@@ -512,15 +726,21 @@ async function refreshTopGames() {
             [],
             "Could not load top games from the API right now."
         );
+        updateTopGamesMoreButton();
     }
 }
 
 async function runGameSearch(rawQuery) {
+    if (uiSettings.disableApiBrowsing) {
+        setSearchSummary("API browsing is disabled. Enable it in settings.");
+        renderGameGrid("searchResults", [], "Search is disabled in settings.");
+        renderTagSuggestions([]);
+        return;
+    }
+
     const query = (rawQuery || "").trim();
     if (!query) {
-        setSearchSummary("Type a game name, genre, or tag to search.");
-        renderGameGrid("searchResults", [], "Search results will appear here.");
-        renderTagSuggestions([]);
+        clearSearchResults();
         return;
     }
 
@@ -536,6 +756,8 @@ async function runGameSearch(rawQuery) {
 
         const tags = filterTags(response.result);
         renderTagSuggestions(tags);
+        searchHasRun = true;
+        updateSettingsUi();
         renderGameGrid(
             "searchResults",
             games,
@@ -556,7 +778,7 @@ async function runGameSearch(rawQuery) {
 }
 
 function openRandomTopGame() {
-    if (!cachedTopGames.length) return;
+    if (uiSettings.disableApiBrowsing || uiSettings.disableTopGames || !cachedTopGames.length) return;
     const randomGame =
         cachedTopGames[Math.floor(Math.random() * cachedTopGames.length)];
     trackPlayedGame(randomGame.slug, randomGame.name);
@@ -567,16 +789,22 @@ function initExplorerUi() {
     if (explorerInitialized || typeof document === "undefined") return;
     explorerInitialized = true;
 
+    uiSettings = loadUiSettings();
+
     const searchInput = document.getElementById("gameSearchInput");
     const searchButton = document.getElementById("searchGamesButton");
     const surpriseButton = document.getElementById("surpriseButton");
     const playSlugButton = document.getElementById("playSlugButton");
+    const openSettingsButton = document.getElementById("openSettingsButton");
+    const closeSettingsButton = document.getElementById("closeSettingsButton");
+    const settingsBackdrop = document.getElementById("settingsBackdrop");
+    const disableApiToggle = document.getElementById("toggleDisableApi");
+    const disableTopToggle = document.getElementById("toggleDisableTopGames");
+    const disablePalmframeToggle = document.getElementById("toggleDisablePalmframe");
 
     renderBrowsePills();
-    setSearchSummary("Loading top games...");
-    refreshTopGames().then(() => {
-        setSearchSummary("Try a query or tap a theme to explore.");
-    });
+    setSearchSummary("Try a query or tap a theme to explore.");
+    applyUiSettings();
 
     if (searchButton && searchInput) {
         searchButton.addEventListener("click", () => runGameSearch(searchInput.value));
@@ -586,8 +814,57 @@ function initExplorerUi() {
         surpriseButton.addEventListener("click", openRandomTopGame);
     }
 
+    const loadMoreTopGamesButton = document.getElementById("loadMoreTopGamesButton");
+    if (loadMoreTopGamesButton) {
+        loadMoreTopGamesButton.addEventListener("click", () => {
+            topGamesVisibleCount += TOP_GAMES_PAGE_SIZE;
+            renderTopGamesSection();
+        });
+    }
+
+    const clearResultsButton = document.getElementById("clearResultsButton");
+    if (clearResultsButton) {
+        clearResultsButton.addEventListener("click", clearSearchResults);
+    }
+
     if (playSlugButton) {
         playSlugButton.addEventListener("click", loadGameFromInput);
+    }
+
+    if (openSettingsButton) {
+        openSettingsButton.addEventListener("click", openSettingsModal);
+    }
+
+    if (closeSettingsButton) {
+        closeSettingsButton.addEventListener("click", closeSettingsModal);
+    }
+
+    if (settingsBackdrop) {
+        settingsBackdrop.addEventListener("click", closeSettingsModal);
+    }
+
+    if (disableApiToggle) {
+        disableApiToggle.addEventListener("change", () => {
+            uiSettings.disableApiBrowsing = disableApiToggle.checked;
+            saveUiSettings();
+            applyUiSettings();
+        });
+    }
+
+    if (disableTopToggle) {
+        disableTopToggle.addEventListener("change", () => {
+            uiSettings.disableTopGames = disableTopToggle.checked;
+            saveUiSettings();
+            applyUiSettings();
+        });
+    }
+
+    if (disablePalmframeToggle) {
+        disablePalmframeToggle.addEventListener("change", () => {
+            uiSettings.disablePalmframe = disablePalmframeToggle.checked;
+            saveUiSettings();
+            applyUiSettings();
+        });
     }
 
     document.addEventListener("click", (event) => {
@@ -690,13 +967,17 @@ function setFeedbackWidgetVisibility(isVisible) {
 
     const feedbackWidget = document.querySelector("palmframe-widget");
     if (feedbackWidget) {
-        feedbackWidget.hidden = !isVisible;
+        feedbackWidget.hidden = uiSettings.disablePalmframe ? true : !isVisible;
     }
 }
 
 async function loadGame() {
     if (typeof window === "undefined" || typeof document === "undefined")
         return;
+
+    enableDevAdTestingPatches();
+
+    uiSettings = loadUiSettings();
 
     let params = new URLSearchParams(window.location.search);
     let gameSlug = params.get("game");
@@ -877,12 +1158,16 @@ if (typeof window !== "undefined") {
     // Keyboard shortcuts
     document.addEventListener("keydown", function(e) {
         if (typeof document === "undefined") return;
+
+        if (e.key === "Escape") {
+            closeSettingsModal();
+        }
         
         // Forward slash to focus search
         if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
             e.preventDefault();
             const searchInput = document.getElementById("gameSearchInput");
-            if (searchInput) {
+            if (searchInput && !uiSettings.disableApiBrowsing) {
                 searchInput.focus();
             }
         }

@@ -57,68 +57,87 @@
 <body>
     <div class="loader" id="loader" aria-label="Loading game...">Loading…</div>
 
-    <main class="loader" id="gameInput">
-        <div class="hero-section">
-            <img src="assets/logo.png" alt="SaneGames Logo" class="hero-logo" />
-            <h1>Welcome to <b>SaneGames.</b></h1>
-            <h2 id="tagline">
-                Search and browse CrazyGames fast, then play without all the extra clutter.
-            </h2>
-        </div>
+    <main id="gameInput" class="app-shell">
+        <header class="app-header">
+            <div class="brand-wrap">
+                <img src="assets/logo.png" alt="SaneGames Logo" class="hero-logo" />
+                <div>
+                    <h1>Sane<b>Games</b></h1>
+                    <p class="app-subtitle">Launchpad for CrazyGames slugs, themes, and top picks.</p>
+                </div>
+            </div>
+            <button id="openSettingsButton" type="button" class="secondary-button" aria-label="Open settings">Settings</button>
+        </header>
 
-        <section class="search-panel" aria-label="Search CrazyGames titles">
-            <h3>Find Games</h3>
-            <p class="subtle-copy">Powered by the CrazyGames public API search endpoint.</p>
+        <section id="searchPanel" class="search-panel" aria-label="Search CrazyGames titles">
+            <div class="panel-title-row">
+                <h3>Search & Launch</h3>
+                <button id="surpriseButton" type="button" class="secondary-button" aria-label="Play a random popular game">Surprise Me</button>
+            </div>
             <div class="search-row">
                 <div class="search-input-wrap">
-                    <label for="gameSearchInput" class="input-label">Search</label>
-                    <input type="text" placeholder="Try: io, racing, horror, action..." id="gameSearchInput" aria-label="Search games" />
+                    <label for="gameSearchInput" class="input-label">Search games or categories</label>
+                    <input type="text" placeholder="io, racing, horror, action..." id="gameSearchInput" aria-label="Search games" />
                 </div>
                 <button id="searchGamesButton" type="button" aria-label="Search games">Search</button>
-                <button id="surpriseButton" type="button" class="secondary-button" aria-label="Play a random popular game">Surprise Me</button>
             </div>
             <div id="activeBrowseTerm" class="browse-meta" aria-live="polite"></div>
             <div id="searchTags" class="tag-row" aria-label="Search tags"></div>
-            <div id="searchResults" class="game-grid" aria-live="polite"></div>
         </section>
 
-        <section class="browse-panel" aria-label="Browse by themes">
-            <h3>Browse Themes</h3>
-            <div id="browsePills" class="pill-row"></div>
+        <section id="apiDisabledNotice" class="api-disabled-notice" aria-live="polite" hidden>
+            CrazyGames API browsing is disabled in settings. You can still launch games by slug or bookmarklet!
         </section>
 
-        <section class="top-panel" aria-label="Top games">
-            <h3>Top Picks Right Now</h3>
-            <div id="topGamesGrid" class="game-grid"></div>
-        </section>
+        <div id="explorerPanels">
+            <section id="browsePanel" class="browse-panel" aria-label="Browse by themes">
+                <h3>Browse Themes</h3>
+                <div id="browsePills" class="pill-row"></div>
+            </section>
 
-        <section>
-            <h3>Manual Slug Launch</h3>
-            <p>
-                Know the exact slug? Paste it here (example: <code>crazy-flips-3d</code>) and launch immediately.
-            </p>
-            <div class="manual-row">
-                <div>
-                    <label for="gameSlugInput" class="input-label">Game Slug</label>
-                    <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Game to load." />
+            <section class="top-panel" id="topGamesPanel" aria-label="Top games">
+                <div class="panel-title-row">
+                    <h3>Top Picks</h3>
+                    <button id="loadMoreTopGamesButton" type="button" class="secondary-button" aria-label="Load more top games">More</button>
                 </div>
-                <button id="playSlugButton" type="button" aria-label="Load and play the entered game">Play Slug</button>
-            </div>
-        </section>
+                <div id="topGamesGrid" class="game-grid" aria-live="polite"></div>
+            </section>
 
-        <section aria-label="Bookmarklet">
-            <h3>Bookmarklet</h3>
-            <p>Drag this button to your bookmarks bar, then click it on any CrazyGames game page.</p>
-            <div style="text-align: center; margin: 0.8em 0;">
-                <a href="javascript:(function(){const s='sanegames.elouan.xyz',h=window.location.hostname,f=window.location.href;if(h===s){alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!')}else{const r=/crazygames\.(?:com|id|dev|co\.uk|net|org|[a-z]{2})\/game\/([^\/?#]+)/,m=f.match(r);if(m&&m[1]){const g=m[1],n=`https://sanegames.elouan.xyz/?game=${g}`;window.location.href=n}else{alert('Please navigate to a CrazyGames game page first, then click the bookmarklet.')}}})();"
-                    class="bookmarklet-button" draggable="true"
-                    onclick="event.preventDefault(); alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!');"
-                    role="button"
-                    aria-label="Drag to bookmarks bar to install SaneGames bookmarklet">
-                    Play Sane
-                </a>
+            <section id="resultsPanel" class="results-panel" aria-label="Search results" hidden>
+                <div class="panel-title-row">
+                    <h3>Search Results</h3>
+                    <button id="clearResultsButton" type="button" class="secondary-button" aria-label="Clear search results">Clear</button>
+                </div>
+                <div id="searchResults" class="game-grid" aria-live="polite"></div>
+            </section>
+
+            <div class="utility-grid">
+                <section>
+                    <h3>Manual Slug</h3>
+                    <div class="manual-row">
+                        <div class="search-input-wrap">
+                            <label for="gameSlugInput" class="input-label">Game slug</label>
+                            <input type="text" placeholder="e.g., crazy-flips-3d" id="gameSlugInput" aria-label="Game slug input field. Press Enter or click Play Slug to load." />
+                        </div>
+                        <button id="playSlugButton" type="button" aria-label="Load and play the entered game">Play Slug</button>
+                    </div>
+                </section>
+
+                <section aria-label="Bookmarklet">
+                    <h3>Bookmarklet</h3>
+                    <p>Drag to bookmarks, then click it on a CrazyGames game page.</p>
+                    <div class="bookmarklet-wrap">
+                        <a href="javascript:(function(){const s='sanegames.elouan.xyz',h=window.location.hostname,f=window.location.href;if(h===s){alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!')}else{const r=/crazygames\.(?:com|id|dev|co\.uk|net|org|[a-z]{2})\/game\/([^\/?#]+)/,m=f.match(r);if(m&&m[1]){const g=m[1],n=`https://sanegames.elouan.xyz/?game=${g}`;window.location.href=n}else{alert('Please navigate to a CrazyGames game page first, then click the bookmarklet.')}}})();"
+                            class="bookmarklet-button" draggable="true"
+                            onclick="event.preventDefault(); alert('Hey, don\'t CLICK me here, DRAG me to your bookmarks bar!');"
+                            role="button"
+                            aria-label="Drag to bookmarks bar to install SaneGames bookmarklet">
+                            Play Sane
+                        </a>
+                    </div>
+                </section>
             </div>
-        </section>
+        </div>
 
         <footer>
             <p>
@@ -130,6 +149,30 @@
             </nav>
         </footer>
     </main>
+
+    <div id="settingsModal" class="settings-modal" hidden>
+        <div class="settings-backdrop" id="settingsBackdrop"></div>
+        <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+            <div class="settings-header">
+                <h3 id="settingsTitle">SaneGames Settings</h3>
+                <button id="closeSettingsButton" type="button" class="secondary-button" aria-label="Close settings">Close</button>
+            </div>
+            <div class="settings-body">
+                <label class="toggle-row">
+                    <input type="checkbox" id="toggleDisableApi" />
+                    <span>Disable CrazyGames API browsing</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" id="toggleDisableTopGames" />
+                    <span>Disable Top Picks section</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" id="toggleDisablePalmframe" />
+                    <span>Disable Palmframe feedback widget</span>
+                </label>
+            </div>
+        </div>
+    </div>
 
     <script src="palmframe.js"></script>
     <palmframe-widget project="w82cB8t3Jgv0" />
