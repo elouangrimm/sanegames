@@ -84,7 +84,7 @@
     --pf-sentiment-hate: #60a5fa;
     --pf-sentiment-love: #fbbf24;
     --pf-backdrop: rgba(2, 6, 23, 0.72);
-    --pf-shadow: 0 -24px 60px rgba(2, 6, 23, 0.5);
+    --pf-shadow: 0 0 0 rgba(0, 0, 0, 0);
 `,
         z = `
   :host {
@@ -107,7 +107,7 @@
     --pf-sentiment-hate: #60a5fa;
     --pf-sentiment-love: #fbbf24;
     --pf-backdrop: rgba(2, 6, 23, 0.72);
-    --pf-shadow: 0 -24px 60px rgba(2, 6, 23, 0.5);
+    --pf-shadow: 0 0 0 rgba(0, 0, 0, 0);
     --pf-radius: 4px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
